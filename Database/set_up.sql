@@ -6,6 +6,8 @@ CREATE TABLE reports (
     -- GPS location (WGS84)
     position GEOGRAPHY(POINT, 4326) NOT NULL,
 
+    message TEXT NOT NULL,
+
     -- Creation timestamp
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
