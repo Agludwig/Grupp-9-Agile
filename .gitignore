@@ -1,0 +1,55 @@
+# ----------------------
+# Python
+# ----------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Virtual environments
+venv/
+.env/
+.venv/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Logs
+*.log
+
+# ----------------------
+# Environment variables / secrets
+# ----------------------
+.env
+.env.*
+secrets.json
+config.json
+
+# Example: your login credentials file
+login.py
+auth.py
+credentials.py
+
+# ----------------------
+# FastAPI / backend
+# ----------------------
+*.db
+*.sqlite3
+
+# ----------------------
+# Frontend (React)
+# ----------------------
+node_modules/
+build/
+dist/
+
+# ----------------------
+# IDE / OS
+# ----------------------
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
