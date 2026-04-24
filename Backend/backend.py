@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-
 def add_report(lon: float, lat: float, message: str):
     with psycopg.connect(os.getenv("DATABASE_URL")) as conn:
         with conn.cursor() as cur:
