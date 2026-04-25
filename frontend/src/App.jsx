@@ -1,26 +1,23 @@
-﻿import { useEffect, useState } from "react";
-import ReportForm from "./components/ReportForm";
-import List from "./components/List";
-import "./style.css";
+import { useEffect, useState } from "react";
 
 function App() {
-  const [refresh, setRefresh] = useState(0);
+  const [reports, setReports] = useState([]);
 
-  const handleSubmit = async (report) => {
-    await fetch("http://127.0.0.1:8000/reports", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(report),
-    });
-    setRefresh((r) => r + 1);
-  };
+  useEffect(() => {
+    fetch("http://127.0.0.1:8000/reports")
+      .then((res) => res.json())
+      .then((data) => setReports(data));
+  }, []);
 
   return (
     <div>
-      <h1>LitterFree Cities</h1>
-      <ReportForm onSubmit={handleSubmit} />
-      <h2 style={{ marginTop: "2rem" }}>All Reports</h2>
-      <List key={refresh} />
+      <h1>Reports</h1>
+
+      <ul>
+        {reports.map((r) => (
+          <li key={r.id}>{r.message}</li>
+        ))}
+      </ul>
     </div>
   );
 }
