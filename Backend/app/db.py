@@ -1,6 +1,5 @@
 import psycopg
 import os
-import pandas as pd
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -62,9 +61,3 @@ def get_all_reports():
     lon=12.9746,
     lat=57.7089,
     message="Radioaktivt avfall?") """
-
-#print(result)
-
-#print(get_all_reports())
-
-print(get_all_reports_pandas_df())
