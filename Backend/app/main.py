@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.db import get_all_reports, add_report
-from app.models import ReportCreate
+from db import get_all_reports, add_report
+from models import ReportCreate
 
 app = FastAPI()
 
