@@ -13,6 +13,8 @@ supabase_url: str = os.environ.get("SUPABASE_URL")
 supabase_key: str = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(supabase_url, supabase_key)
 
+print("URL:", os.getenv("SUPABASE_URL"))
+print("KEY:", os.getenv("SUPABASE_KEY"))
 
 def add_report(lon: float, lat: float, title: str, message: str):
     with psycopg.connect(database_url, sslmode="require") as conn:
@@ -105,7 +107,7 @@ def get_all_reports_pandas_df():
 
 
 def get_all_reports():
-    with psycopg.connect((database_url), sslmode="require") as conn:
+    with psycopg.connect(database_url, sslmode="require") as conn:
         with conn.cursor() as cur:
             cur.execute("""
                 SELECT

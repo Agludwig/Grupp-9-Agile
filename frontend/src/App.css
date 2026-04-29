@@ -1,0 +1,33 @@
+    body {
+        font-family: sans-serif;
+        max-width: 700px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+
+    h1 {
+        margin-bottom: 1.5rem;
+    }
+
+    .report {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .report img {
+      width: 100%;
+      max-height: 250px;
+      object-fit: cover;
+      border-radius: 4px;
+      margin-bottom: 0.75rem;
+    }
+
+    .report p {
+        margin: 0.25rem 0;
+    }
+    .report .meta {
+        color: #666;
+        font-size: 0.85rem;
+    }
