@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import "./App.css";
+import List from "./components/list";
 
 function App() {
   const [reports, setReports] = useState([]);
@@ -13,18 +13,9 @@ function App() {
   return (
     <div>
       <h1>Reports</h1>
-      {reports.length === 0 ? (
-        <p>No reports available</p>
-      ) : (
-        reports.map((r, i) => (
-          <div key={i} className="report">
-            {r.image_url && <img src={r.image_url} alt="Report image" />}
-            <p>{r.message}</p>
-            <p className="meta">📍 {r.address || `${r.lat}, ${r.lon}`}</p>
-            <p className="meta">🕒 {new Date(r.created_at).toLocaleString()}</p>
-          </div>
-        ))
-      )}
+        <div>
+            <List />
+        </div>
     </div>
   );
 }
