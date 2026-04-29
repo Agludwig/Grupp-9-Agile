@@ -9,26 +9,26 @@ function ReportForm({ onSubmit }) {
   const [success, setSuccess] = useState("");
 
   const handleSubmit = () => {
-    if (!title.trim() || !description.trim()) {
-      setError("Title and description are required.");
-      setSuccess("");
+
+    if (!title.trim() || !description.trim() || !lat.trim() || !lon.trim()) {
+      setError("All fields (Title, Description, Lat, Lon) are required.");
       return;
     }
 
-    if (isNaN(lat) || isNaN(lon)) {
-      setError("Latitude and longitude must be valid numbers.");
-      setSuccess("");
+    const parsedLat = parseFloat(lat);
+    const parsedLon = parseFloat(lon);
 
+    if (isNaN(parsedLat) || isNaN(parsedLon)) {
+      setError("Latitude and longitude must be valid numbers.");
       return;
     }
 
     setError("");
-
     onSubmit({
       title,
       description,
-      lat: parseFloat(lat),
-      lon: parseFloat(lon),
+      lat: parsedLat,
+      lon: parsedLon,
     });
 
     setSuccess("Report submitted successfully!");
@@ -60,12 +60,16 @@ function ReportForm({ onSubmit }) {
         onChange={(e) => setDescription(e.target.value)}
       />
 
+      <small className="text-muted">Required</small>
+
       <input
         className="form-control mb-2"
         placeholder="Latitude"
         value={lat}
         onChange={(e) => setLat(e.target.value)}
       />
+
+      <small className="text-muted">Required</small>
 
       <input
         className="form-control mb-2"
@@ -77,7 +81,7 @@ function ReportForm({ onSubmit }) {
       <button
         className="btn btn-primary"
         onClick={handleSubmit}
-        disabled={!title || !description}
+        disabled={!title || !description || !lat || !lon}
       >
         Submit Report
       </button>
