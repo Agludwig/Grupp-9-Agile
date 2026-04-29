@@ -5,16 +5,16 @@ import pandas as pd
 
 load_dotenv()
 
-def add_report(lon: float, lat: float, message: str):
+def add_report(lon: float, lat: float, title: str, description: str) -> int:
     with psycopg.connect(os.getenv("DATABASE_URL")) as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
-                INSERT INTO reports (position, message)
-                VALUES (ST_MakePoint(%s, %s)::geography, %s)
-                RETURNING id, message, created_At;
+                INSERT INTO reports (position, title, description)
+                VALUES (ST_MakePoint(%s, %s)::geography, %s, %s)
+                RETURNING id, title, description, created_At;
                 """,
-                (lon, lat, message)
+                (lon, lat, title, description)
             )
             report_id = cur.fetchone()[0]
     return report_id
@@ -27,7 +27,8 @@ def get_all_reports_pandas_df():
                 id,
                 ST_X(position::geometry) AS lon,
                 ST_Y(position::geometry) AS lat,
-                message,
+                title,
+                description,
                 handled,
                 created_at,
                 handled_at
@@ -45,7 +46,8 @@ def get_all_reports():
                     id,
                     ST_X(position::geometry) AS lon,
                     ST_Y(position::geometry) AS lat,
-                    message,
+                    title,
+                    description,
                     handled,
                     created_at,
                     handled_at
@@ -61,4 +63,5 @@ def get_all_reports():
 """ add_report_test = add_report(
     lon=12.9746,
     lat=57.7089,
-    message="Radioaktivt avfall?") """
+    title="Radioaktivt avfall?",
+    description="Hittat radioaktivt avfall i närheten.") """

@@ -3,4 +3,5 @@ from pydantic import BaseModel, Field
 class ReportCreate(BaseModel):
     lon: float
     lat: float
-    message: str = Field(min_length=1)
+    title : str = Field(min_length=1)
+    description: str = Field(min_length=1)
