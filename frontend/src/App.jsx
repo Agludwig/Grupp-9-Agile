@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import List from "./components/list";
+import "./components/style.css";
 
 function App() {
   const [reports, setReports] = useState([]);
