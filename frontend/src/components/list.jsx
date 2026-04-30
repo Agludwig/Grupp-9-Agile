@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import "../App.css";
+import "../style.css";
 
 function List() {
   const [reports, setReports] = useState([]);
