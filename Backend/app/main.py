@@ -1,7 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from db import get_all_reports, add_report
 from models import ReportCreate
+from submit import submit_report
 
 app = FastAPI()
 
@@ -19,9 +20,10 @@ def get_reports():
 
 @app.post("/reports")
 def create_report(report: ReportCreate):
-    report_id = add_report(
-        lon=report.lon,
-        lat=report.lat,
-        message=report.message
-    )
-    return {"id": report_id}
+    try:
+        result = submit_report(report)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An unexpected error occured")
