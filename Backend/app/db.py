@@ -6,6 +6,9 @@ from supabase import create_client, Client
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'))
 
+env_path = os.path.join(os.path.dirname(__file__), '.env')
+load_dotenv(env_path)
+
 database_url: str = os.environ.get("DATABASE_URL")
 supabase_url: str = os.environ.get("SUPABASE_URL")
 supabase_key: str = os.environ.get("SUPABASE_KEY")
