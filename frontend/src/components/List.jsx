@@ -36,23 +36,6 @@ function FlyToLocation({ selectedReport }) {
       map.flyTo([selectedReport.lat, selectedReport.lon], 16, { duration: 1 });
     }
   }, [selectedReport, map]);
-    if (!reports.length || !L.heatLayer) return;
-
-    const heatData = reports
-      .filter(r => r.lat && r.lon)
-      .map(r => [r.lat, r.lon, 1]);
-
-    const heat = L.heatLayer(heatData, {
-      radius: 25,
-      blur: 45,
-      maxZoom: 8,
-      max: 0.5
-    }).addTo(map);
-
-    return () => {
-      map.removeLayer(heat);
-    };
-  }, [reports, map]);
   return null;
 }
 
@@ -67,8 +50,8 @@ function HeatmapLayer({ reports }) {
       .map(r => [r.lat, r.lon, 1]);
 
     const heat = L.heatLayer(heatData, {
-      radius: 20,
-      blur: 40,
+      radius: 25,
+      blur: 45,
       maxZoom: 8,
       max: 0.2
     }).addTo(map);
@@ -125,8 +108,6 @@ function List() {
 
   return (
     <div>
-<<<<<<< Updated upstream
-=======
       <label>
         Heatmap &nbsp;
   <input
@@ -151,19 +132,20 @@ function List() {
     onChange={(e) => setTimeFilter(Number(e.target.value))}
     style={{ width: "50%" }}
     />
-  </div>
 
->>>>>>> Stashed changes
+  </div>
       <MapContainer center={[57.7089, 11.9746]} zoom={12} style={{ height: "400px", width: "100%", marginBottom: "2rem" }}>
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap contributors" />
         <FlyToLocation selectedReport={selectedReport} />
-        {reports.map((r) => (
+        {!heatmapOn &&
+          filteredReports.map((r) => (
           r.lat && r.lon && (
             <Marker
               key={r.id}
               position={[r.lat, r.lon]}
               icon={selectedReport?.id === r.id ? selectedIcon : r.handled ? greenIcon : blueIcon}
               ref={(ref) => { if (ref) markerRefs.current[r.id] = ref; }}
+              eventHandlers={{ click: () => handleSelectReport(r) }}
             >
               <Popup>
                 <strong>{r.title}</strong><br />
@@ -179,18 +161,6 @@ function List() {
             </Marker>
           )
         ))}
-        {!heatmapOn &&
-          filteredReports.map((r) => (
-            r.lat && r.lon && (
-              <Marker key={r.id} position={[r.lat, r.lon]} icon={r.handled ? greenIcon : blueIcon}>
-                <Popup>
-                  <strong>{r.title}</strong><br />
-                  {r.message}<br />
-                  {r.handled ? "✅ Handled" : "⏳ Pending"}
-                </Popup>
-              </Marker>
-            )
-          ))}
         {heatmapOn && <HeatmapLayer reports={filteredReports} />}
       </MapContainer>
 
