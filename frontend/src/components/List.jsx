@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import "leaflet.heat/dist/leaflet-heat.js";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -59,10 +60,49 @@ function FlyToLocation({ selectedReport }) {
   return null;
 }
 
+function HeatmapLayer({ reports }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!reports.length || !L.heatLayer) return;
+
+    const heatData = reports
+      .filter(r => r.lat && r.lon)
+      .map(r => [r.lat, r.lon, 1]);
+
+    const heat = L.heatLayer(heatData, {
+      radius: 20,
+      blur: 40,
+      maxZoom: 8,
+      max: 0.2
+    }).addTo(map);
+
+    return () => {
+      map.removeLayer(heat);
+    };
+  }, [reports, map]);
+
+  return null;
+}
+
+
 function List() {
   const [reports, setReports] = useState([]);
   const [selectedReport, setSelectedReport] = useState(null);
   const markerRefs = useRef({});
+
+  const [heatmapOn, setHeatmapOn] = useState(false);
+  const [timeFilter, setTimeFilter] = useState(24); // hours
+
+  const filteredReports = reports.filter(r => {
+    if (!r.created_at) return false;
+
+  const createdTime = new Date(r.created_at).getTime();
+  const now = Date.now();
+  const diffDays = (now - createdTime) / (1000 * 60 * 60 * 24);
+
+  return diffDays <= timeFilter;
+});
 
   const fetchReports = () => {
     fetch("http://127.0.0.1:8000/reports")
@@ -143,6 +183,19 @@ function List() {
             </Marker>
           )
         ))}
+        {!heatmapOn &&
+          filteredReports.map((r) => (
+            r.lat && r.lon && (
+              <Marker key={r.id} position={[r.lat, r.lon]} icon={r.handled ? greenIcon : blueIcon}>
+                <Popup>
+                  <strong>{r.title}</strong><br />
+                  {r.message}<br />
+                  {r.handled ? "✅ Handled" : "⏳ Pending"}
+                </Popup>
+              </Marker>
+            )
+          ))}
+        {heatmapOn && <HeatmapLayer reports={filteredReports} />}
       </MapContainer>
 
       {reports.length === 0 ? (
