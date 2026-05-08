@@ -31,10 +31,31 @@ const selectedIcon = new L.Icon({
 function FlyToLocation({ selectedReport }) {
   const map = useMap();
   useEffect(() => {
+<<<<<<< Updated upstream
     if (selectedReport) {
       map.flyTo([selectedReport.lat, selectedReport.lon], 16, { duration: 1 });
     }
   }, [selectedReport, map]);
+=======
+    if (!reports.length || !L.heatLayer) return;
+
+    const heatData = reports
+      .filter(r => r.lat && r.lon)
+      .map(r => [r.lat, r.lon, 1]);
+
+    const heat = L.heatLayer(heatData, {
+      radius: 25,
+      blur: 45,
+      maxZoom: 8,
+      max: 0.5
+    }).addTo(map);
+
+    return () => {
+      map.removeLayer(heat);
+    };
+  }, [reports, map]);
+
+>>>>>>> Stashed changes
   return null;
 }
 
@@ -68,6 +89,35 @@ function List() {
 
   return (
     <div>
+<<<<<<< Updated upstream
+=======
+      <label>
+        Heatmap &nbsp;
+  <input
+    type="checkbox"
+    checked={heatmapOn}
+    onChange={() => setHeatmapOn(!heatmapOn)}
+  />
+</label>
+<div style={{ marginBottom: "1rem" }} >
+
+  <div>
+    <label>
+      Show reports from last {timeFilter} days
+    </label>
+  </div>
+
+  <input
+    type="range"
+    min="1"
+    max="90"   // 90 days
+    value={timeFilter}
+    onChange={(e) => setTimeFilter(Number(e.target.value))}
+    style={{ width: "50%" }}
+    />
+  </div>
+
+>>>>>>> Stashed changes
       <MapContainer center={[57.7089, 11.9746]} zoom={12} style={{ height: "400px", width: "100%", marginBottom: "2rem" }}>
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap contributors" />
         <FlyToLocation selectedReport={selectedReport} />
