@@ -32,12 +32,10 @@ const selectedIcon = new L.Icon({
 function FlyToLocation({ selectedReport }) {
   const map = useMap();
   useEffect(() => {
-<<<<<<< Updated upstream
     if (selectedReport) {
       map.flyTo([selectedReport.lat, selectedReport.lon], 16, { duration: 1 });
     }
   }, [selectedReport, map]);
-=======
     if (!reports.length || !L.heatLayer) return;
 
     const heatData = reports
@@ -55,8 +53,6 @@ function FlyToLocation({ selectedReport }) {
       map.removeLayer(heat);
     };
   }, [reports, map]);
-
->>>>>>> Stashed changes
   return null;
 }
 
