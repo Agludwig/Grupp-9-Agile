@@ -1,4 +1,5 @@
 import { useState } from "react";
+import RegisterModal from "./RegisterModal";
 
 function LoginForm({ setCurrentUser }) {
   const [username, setUsername] =
@@ -6,6 +7,11 @@ function LoginForm({ setCurrentUser }) {
 
   const [password, setPassword] =
     useState("");
+
+  const [showRegister, setShowRegister] =
+  useState(false);
+
+  
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -62,7 +68,19 @@ function LoginForm({ setCurrentUser }) {
       <button type="submit">
         Log in
       </button>
+
+    
+
+      <RegisterModal
+      show={showRegister}
+      onClose={() =>
+      setShowRegister(false)
+      }
+/>
+
     </form>
+
+    
   );
 }
 
