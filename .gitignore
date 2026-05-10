@@ -29,7 +29,6 @@ secrets.json
 config.json
 
 # Example: your login credentials file
-login.py
 auth.py
 credentials.py
 
