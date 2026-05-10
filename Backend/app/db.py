@@ -92,7 +92,8 @@ def get_all_reports_pandas_df():
                 handled,
                 handled_at,
                 handled_image_path
-            FROM reports;
+            FROM reports
+            ORDER BY created_at DESC;
         """, conn)
     return df
 
@@ -112,7 +113,8 @@ def get_all_reports():
                     handled,
                     handled_at,
                     handled_image_path
-                FROM reports;
+                FROM reports
+                ORDER BY created_at DESC;
             """)
             columns = [desc[0] for desc in cur.description]
             rows = cur.fetchall()
