@@ -1,23 +1,14 @@
-function LoggedIn({
-  currentUser,
-  setCurrentUser,
-}) {
-
+function LoggedIn({ currentUser, setCurrentUser }) {
   function handleLogout() {
     setCurrentUser(null);
   }
 
   return (
-    <div>
-      Logged in as{" "}
-      <strong>
-        {currentUser.username}
-      </strong>
-
-      <button
-        onClick={handleLogout}
-        style={{ marginLeft: "1rem" }}
-      >
+    <div className="header-user-bar">
+      <span>
+        Logged in as <strong>{currentUser.username}</strong>
+      </span>
+      <button className="btn-logout" onClick={handleLogout}>
         Log out
       </button>
     </div>
