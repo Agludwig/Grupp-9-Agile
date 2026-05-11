@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from db import get_all_reports, add_report, upload_report_image, mark_report_as_handled
 from models import ReportCreate
 from submit import submit_report
+from login import router as login_router
 
 app = FastAPI()
 
@@ -13,6 +14,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(login_router)
 
 @app.get("/reports")
 def get_reports():
