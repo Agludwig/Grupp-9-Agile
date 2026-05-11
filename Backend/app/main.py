@@ -1,7 +1,7 @@
 ﻿from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from db import get_all_reports, add_report, upload_report_image, mark_report_as_handled, sign_up_report
-from models import ReportCreate, ReportSignUp
+from models import ReportCreate
 from submit import submit_report
 
 app = FastAPI()
