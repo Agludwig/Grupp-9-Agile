@@ -5,3 +5,8 @@ class ReportCreate(BaseModel):
     description: str = Field(min_length=1, max_length=1000)
     lon: float
     lat: float
+
+#Ändra till någon slags CurrentUser?
+class ReportSignUp(BaseModel):
+    user_name: str
+    points: int

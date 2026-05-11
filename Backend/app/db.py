@@ -98,6 +98,9 @@ def get_all_reports_pandas_df():
 
 
 def get_all_reports():
+
+    reset_expired_report()
+
     with psycopg.connect(database_url, sslmode="require") as conn:
         with conn.cursor() as cur:
             cur.execute("""
@@ -111,9 +114,42 @@ def get_all_reports():
                     unhandled_image_path,
                     handled,
                     handled_at,
-                    handled_image_path
+                    handled_image_path,
+                    assigned_to,
+                    assigned_at,
+                    claimer_points
                 FROM reports;
             """)
             columns = [desc[0] for desc in cur.description]
             rows = cur.fetchall()
     return [dict(zip(columns, row)) for row in rows]
+
+def sign_up_report(report_id: int, user_name: str, points: int):
+    with psycopg.connect(database_url, sslmode="require") as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE reports
+                SET assigned_to = %s,
+                    assigned_at = NOW(),
+                    claimer_points = %s
+                WHERE id = %s;
+                """,
+                (user_name, points, report_id)
+            )
+            conn.commit()
+
+def reset_expired_report():
+    with psycopg.connect(database_url, sslmode="require") as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE reports
+                SET assigned_to = NULL,
+                    assigned_at = NULL,
+                    claimer_points = 0
+                WHERE assigned_at < NOW() - INTERVAL '24 hours'
+                AND handled = FALSE;
+                """
+            )
+            conn.commit()

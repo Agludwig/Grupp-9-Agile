@@ -1,7 +1,7 @@
 ﻿from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
-from db import get_all_reports, add_report, upload_report_image, mark_report_as_handled
-from models import ReportCreate
+from db import get_all_reports, add_report, upload_report_image, mark_report_as_handled, sign_up_report
+from models import ReportCreate, ReportSignUp
 from submit import submit_report
 
 app = FastAPI()
@@ -43,5 +43,15 @@ async def handle_report(report_id: int, file: UploadFile = File(None)):
         file_bytes = await file.read() if file else None
         mark_report_as_handled(report_id, file_bytes)
         return {"message": "Report marked as handled"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+#Ändra request:ReportSignUp till någon slags CurrentUser?
+@app.post("/reports/{report_id}/signup")
+def sign_up(report_id: int, request: ReportSignUp):
+    try:
+        sign_up_report(report_id, request.user_name, request.points)
+        return {"message": "Successfully signed up for the report"}
+    
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

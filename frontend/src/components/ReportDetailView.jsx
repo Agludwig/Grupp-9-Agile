@@ -43,6 +43,19 @@ function ReportDetailView({
           <p className="meta">
             Reported: {new Date(report.created_at).toLocaleString()}
           </p>
+
+          {report.assigned_to && (
+            <>
+              <p>
+                <strong>Assigned to:</strong> {report.assigned_to}
+              </p>
+
+              <p>
+                <strong>Assigned at:</strong>{" "}
+                {new Date(report.assigned_at).toLocaleString()}
+              </p>
+            </>
+          )}
         </div>
 
         {/* Small map inside the view */}
