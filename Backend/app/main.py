@@ -48,9 +48,9 @@ async def handle_report(report_id: int, file: UploadFile = File(None)):
 
 #Ändra request:ReportSignUp till någon slags CurrentUser?
 @app.post("/reports/{report_id}/signup")
-def sign_up(report_id: int, request: ReportSignUp):
+def sign_up(report_id: int, username: str):
     try:
-        sign_up_report(report_id, request.user_name, request.points)
+        sign_up_report(report_id, username)
         return {"message": "Successfully signed up for the report"}
     
     except Exception as e:

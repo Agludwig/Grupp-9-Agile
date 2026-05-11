@@ -124,7 +124,7 @@ def get_all_reports():
             rows = cur.fetchall()
     return [dict(zip(columns, row)) for row in rows]
 
-def sign_up_report(report_id: int, user_name: str, points: int):
+def sign_up_report(report_id: int, username: str):
     with psycopg.connect(database_url, sslmode="require") as conn:
         with conn.cursor() as cur:
             cur.execute(
@@ -132,10 +132,9 @@ def sign_up_report(report_id: int, user_name: str, points: int):
                 UPDATE reports
                 SET assigned_to = %s,
                     assigned_at = NOW(),
-                    claimer_points = %s
                 WHERE id = %s;
                 """,
-                (user_name, points, report_id)
+                (username, report_id)
             )
             conn.commit()
 
@@ -147,8 +146,7 @@ def reset_expired_report():
                 UPDATE reports
                 SET assigned_to = NULL,
                     assigned_at = NULL,
-                    claimer_points = 0
-                WHERE assigned_at < NOW() - INTERVAL '24 hours'
+                WHERE assigned_at < NOW() - INTERVAL '1 day'
                 AND handled = FALSE;
                 """
             )

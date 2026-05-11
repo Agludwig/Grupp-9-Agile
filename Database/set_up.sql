@@ -17,6 +17,10 @@ CREATE TABLE reports (
     -- When it was handled
     handled_at TIMESTAMPTZ,
 
+    assigned_to TEXT,
+    assigned_at TIMESTAMPTZ,
+    claimer_points INTEGER DEFAULT 0,
+
     -- Ensure consistency between handled + handled_at
     CONSTRAINT handled_consistency CHECK (
         (handled = FALSE AND handled_at IS NULL)
