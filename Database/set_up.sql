@@ -29,6 +29,12 @@ CREATE TABLE reports (
     )
 );
 
+CREATE TABLE users (
+    id BIGSERIAL PRIMARY KEY,
+    username TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL
+);
+
 CREATE INDEX idx_reports_position
 ON reports
 USING GIST (position);

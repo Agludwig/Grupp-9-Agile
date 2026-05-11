@@ -92,7 +92,8 @@ def get_all_reports_pandas_df():
                 handled,
                 handled_at,
                 handled_image_path
-            FROM reports;
+            FROM reports
+            ORDER BY created_at DESC;
         """, conn)
     return df
 
@@ -118,11 +119,58 @@ def get_all_reports():
                     assigned_to,
                     assigned_at,
                     claimer_points
-                FROM reports;
+                FROM reports
+                ORDER BY created_at DESC;
             """)
             columns = [desc[0] for desc in cur.description]
             rows = cur.fetchall()
     return [dict(zip(columns, row)) for row in rows]
+
+
+
+def create_user(username: str, password: str):
+    with psycopg.connect(database_url, sslmode="require") as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO users (username, password)
+                VALUES (%s, %s)
+                RETURNING id, username;
+                """,
+                (username, password)
+            )
+
+            row = cur.fetchone()
+            conn.commit()
+
+    return {
+        "id": row[0],
+        "username": row[1],
+    }
+
+
+def login_user(username: str, password: str):
+    with psycopg.connect(database_url, sslmode="require") as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id, username
+                FROM users
+                WHERE username = %s
+                AND password = %s;
+                """,
+                (username, password)
+            )
+
+            row = cur.fetchone()
+
+    if row:
+        return {
+            "id": row[0],
+            "username": row[1],
+        }
+
+    return None
 
 def sign_up_report(report_id: int, username: str):
     with psycopg.connect(database_url, sslmode="require") as conn:
