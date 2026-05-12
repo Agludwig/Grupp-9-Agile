@@ -22,12 +22,12 @@ def login(data: LoginRequest):
         with conn.cursor() as cur:
 
             cur.execute(
-                """
-                SELECT username
-                FROM users
-                WHERE username = %s
-                AND password = %s
-                """,
+                    """
+                    SELECT id, username
+                    FROM users
+                    WHERE username = %s
+                    AND password = %s
+                    """,
                 (
                     data.username,
                     data.password,
@@ -43,8 +43,9 @@ def login(data: LoginRequest):
         )
 
     return {
-        "username": user[0]
-    }
+    "id": user[0],
+    "username": user[1]
+}
 
 
 @router.post("/register")

@@ -15,20 +15,26 @@ supabase_key: str = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(supabase_url, supabase_key)
 
 
-def add_report(lon: float, lat: float, title: str, message: str):
+def add_report(lon: float, lat: float, title: str, message: str, user_id: int):
     with psycopg.connect(database_url, sslmode="require") as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
-                INSERT INTO reports (position, title, message)
-                VALUES (
-                    ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography,
-                    %s,
-                    %s
-                )
+                INSERT INTO reports (
+                        position,
+                        title,
+                        message,
+                        created_by
+                    )
+                    VALUES (
+                        ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography,
+                        %s,
+                        %s,
+                        %s
+                    )
                 RETURNING id, title, message, created_at;
                 """,
-                (lon, lat, title, message)
+                (lon, lat, title, message, user_id)
             )
             row = cur.fetchone()
             conn.commit()
@@ -40,7 +46,7 @@ def add_report(lon: float, lat: float, title: str, message: str):
     }
 
 
-def mark_report_as_handled(report_id: int, handled_image_bytes: bytes = None):
+def mark_report_as_handled(report_id: int, handled_by: int, handled_image_bytes: bytes = None):
     handled_image_path = None
     if handled_image_bytes:
         handled_image_path = upload_report_image(handled_image_bytes, report_id, is_handled=True)
@@ -51,10 +57,11 @@ def mark_report_as_handled(report_id: int, handled_image_bytes: bytes = None):
                 UPDATE reports
                 SET handled = TRUE,
                     handled_at = NOW(),
-                    handled_image_path = %s
+                    handled_image_path = %s,
+                    handled_by = %s
                 WHERE id = %s;
                 """,
-                (handled_image_path, report_id)
+                (handled_image_path, handled_by, report_id)
             )
             conn.commit()
 
@@ -82,18 +89,34 @@ def get_all_reports_pandas_df():
     with psycopg.connect(database_url, sslmode="require") as conn:
         df = pd.read_sql("""
             SELECT
-                id,
-                ST_X(position::geometry) AS lon,
-                ST_Y(position::geometry) AS lat,
-                title,
-                message,
-                created_at,
-                unhandled_image_path,
-                handled,
-                handled_at,
-                handled_image_path
-            FROM reports
-            ORDER BY created_at DESC;
+                r.id,
+
+                ST_X(r.position::geometry) AS lon,
+                ST_Y(r.position::geometry) AS lat,
+
+                r.title,
+                r.message,
+                r.created_at,
+
+                r.unhandled_image_path,
+
+                r.handled,
+                r.handled_at,
+                r.handled_image_path,
+
+                creator.username AS created_by_username,
+
+                handler.username AS handled_by_username
+
+            FROM reports r
+
+            LEFT JOIN users creator
+            ON r.created_by = creator.id
+
+            LEFT JOIN users handler
+            ON r.handled_by = handler.id
+
+            ORDER BY r.created_at DESC;
         """, conn)
     return df
 

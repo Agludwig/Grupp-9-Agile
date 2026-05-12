@@ -24,7 +24,8 @@ def submit_report(report: ReportCreate) -> dict:
         lon=report.lon,
         lat=report.lat, 
         title=report.title,
-        message=report.description
+        message=report.description,
+        user_id=report.user_id
     )
 
     return {

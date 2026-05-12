@@ -53,7 +53,10 @@ function App() {
         <div className="container">
           <div className="row">
             <div className="col-md-12">
-              <ReportForm onSubmit={handleSubmit} />
+              <ReportForm
+                  onSubmit={handleSubmit}
+                  currentUser={currentUser}
+                />
             </div>
           </div>
 
@@ -74,6 +77,7 @@ function App() {
           {selectedReport && (
             <ReportDetailView
               report={selectedReport}
+              currentUser={currentUser}
               onClose={() => setSelectedReport(null)}
               onRefresh={() => setRefresh((prev) => prev + 1)}
             />
