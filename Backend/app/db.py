@@ -126,18 +126,34 @@ def get_all_reports():
         with conn.cursor() as cur:
             cur.execute("""
                 SELECT
-                    id,
-                    ST_X(position::geometry) AS lon,
-                    ST_Y(position::geometry) AS lat,
-                    title,
-                    message,
-                    created_at,
-                    unhandled_image_path,
-                    handled,
-                    handled_at,
-                    handled_image_path
-                FROM reports
-                ORDER BY created_at DESC;
+                    r.id,
+
+                    ST_X(r.position::geometry) AS lon,
+                    ST_Y(r.position::geometry) AS lat,
+
+                    r.title,
+                    r.message,
+                    r.created_at,
+
+                    r.unhandled_image_path,
+
+                    r.handled,
+                    r.handled_at,
+                    r.handled_image_path,
+
+                    creator.username AS created_by_username,
+
+                    handler.username AS handled_by_username
+
+                FROM reports r
+
+                LEFT JOIN users creator
+                ON r.created_by = creator.id
+
+                LEFT JOIN users handler
+                ON r.handled_by = handler.id
+
+                ORDER BY r.created_at DESC;
             """)
             columns = [desc[0] for desc in cur.description]
             rows = cur.fetchall()
