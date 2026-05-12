@@ -19,13 +19,14 @@ def submit_report(report: ReportCreate) -> dict:
     
     if not is_valid:
         raise ValueError(error)
-    
+   
     report_data = add_report(
         lon=report.lon,
         lat=report.lat, 
         title=report.title,
         message=report.description,
         user_id=report.user_id
+        
     )
 
     return {

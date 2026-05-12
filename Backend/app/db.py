@@ -44,6 +44,44 @@ def add_report(lon: float, lat: float, title: str, message: str, user_id: int):
         "message": row[2],
         "created_at": row[3],
     }
+# something like tthis to add points with adding repor. copy to method above. 
+def add_report_with_points(lon: float, lat: float, title: str, message: str, user_id: int):
+    with psycopg.connect(database_url, sslmode="require") as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO reports (
+                        position,
+                        title,
+                        message,
+                        created_by
+                    )
+                    VALUES (
+                        ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography,
+                        %s,
+                        %s,
+                        %s
+                    )
+                RETURNING id, title, message, created_at;
+                """,
+                (lon, lat, title, message, user_id)
+            )
+            row = cur.fetchone()
+
+            cur.execute("""
+                UPDATE users
+                SET user_points = user_points + 1
+                WHERE id = %s
+            """, (user_id,))
+
+
+            conn.commit()
+    return {
+        "id": row[0],
+        "title": row[1],
+        "message": row[2],
+        "created_at": row[3],
+    }
 
 
 def mark_report_as_handled(report_id: int, handled_by: int, handled_image_bytes: bytes = None):
@@ -63,7 +101,36 @@ def mark_report_as_handled(report_id: int, handled_by: int, handled_image_bytes:
                 """,
                 (handled_image_path, handled_by, report_id)
             )
+
+
             conn.commit()
+
+def mark_report_as_handled_with_points(report_id: int, handled_by: int, handled_image_bytes: bytes = None):
+    handled_image_path = None
+    if handled_image_bytes:
+        handled_image_path = upload_report_image(handled_image_bytes, report_id, is_handled=True)
+    with psycopg.connect(database_url, sslmode="require") as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE reports
+                SET handled = TRUE,
+                    handled_at = NOW(),
+                    handled_image_path = %s,
+                    handled_by = %s
+                WHERE id = %s;
+                """,
+                (handled_image_path, handled_by, report_id)
+            )
+
+            
+            cur.execute("""
+                UPDATE users
+                SET user_points = user_points + 2
+                WHERE id = %s
+            """, (handled_by,))
+
+            conn.commit()            
 
 
 def upload_report_image(file_bytes: bytes, report_id: int, is_handled: bool = False):
