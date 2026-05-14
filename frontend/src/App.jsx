@@ -5,6 +5,7 @@ import Header from "./components/Header";
 import ReportMap from "./components/ReportMap";
 import ReportDetailView from "./components/ReportDetailView";
 import "./style.css";
+import Navbar from "./components/NavBar.jsx";
 
 function App() {
   const [reports, setReports] = useState([]);
@@ -37,6 +38,8 @@ function App() {
       <Header currentUser={currentUser} setCurrentUser={setCurrentUser} />
 
       <h1 className="text-center my-4">LitterFree Cities</h1>
+
+      <Navbar></Navbar>
 
       {!currentUser ? (
         <div className="login-box text-center">
