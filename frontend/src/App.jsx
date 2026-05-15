@@ -22,6 +22,11 @@ function App() {
   }, [refresh]);
 
   const handleSubmit = async (report) => {
+    if (!report) {
+      setRefresh((prev) => prev + 1);
+      return;
+    }
+
     try {
       await fetch("http://127.0.0.1:8000/reports", {
         method: "POST",

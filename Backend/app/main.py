@@ -1,6 +1,6 @@
 ﻿from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
-from db import get_all_reports, upload_report_image, mark_report_as_handled_with_points
+from db import get_all_reports, upload_report_image, mark_report_as_handled_with_points, sign_up_to_handle, remove_signup_from_handle
 from models import ReportCreate
 from submit import submit_report
 from login import router as login_router
@@ -56,5 +56,23 @@ async def handle_report(
         
         
         return {"message": "Report marked as handled"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/reports/{report_id}/signup")
+def signup_report(report_id: int, user_id: int = Form(...)):
+    try:
+        result = sign_up_to_handle(report_id, user_id)
+        return {"message": "User signed up to handle report", **result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/reports/{report_id}/signup/remove")
+def remove_signup_report(report_id: int, user_id: int = Form(...)):
+    try:
+        result = remove_signup_from_handle(report_id, user_id)
+        return {"message": "User removed from report signup", **result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

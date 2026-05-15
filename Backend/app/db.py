@@ -1,12 +1,13 @@
-﻿import psycopg
-import os
-from dotenv import load_dotenv
+﻿import os
+
 import pandas as pd
-from supabase import create_client, Client
+import psycopg
+from dotenv import load_dotenv
+from supabase import Client, create_client
 
-load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'))
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env"))
 
-env_path = os.path.join(os.path.dirname(__file__), '.env')
+env_path = os.path.join(os.path.dirname(__file__), ".env")
 load_dotenv(env_path)
 
 database_url: str = os.environ.get("DATABASE_URL")
@@ -34,7 +35,7 @@ def add_report(lon: float, lat: float, title: str, message: str, user_id: int):
                     )
                 RETURNING id, title, message, created_at;
                 """,
-                (lon, lat, title, message, user_id)
+                (lon, lat, title, message, user_id),
             )
             row = cur.fetchone()
             conn.commit()
@@ -44,7 +45,8 @@ def add_report(lon: float, lat: float, title: str, message: str, user_id: int):
         "message": row[2],
         "created_at": row[3],
     }
-# something like tthis to add points with adding repor. copy to method above. 
+
+
 def add_report_with_points(lon: float, lat: float, title: str, message: str, user_id: int):
     with psycopg.connect(database_url, sslmode="require") as conn:
         with conn.cursor() as cur:
@@ -64,15 +66,18 @@ def add_report_with_points(lon: float, lat: float, title: str, message: str, use
                     )
                 RETURNING id, title, message, created_at;
                 """,
-                (lon, lat, title, message, user_id)
+                (lon, lat, title, message, user_id),
             )
             row = cur.fetchone()
 
-            cur.execute("""
+            cur.execute(
+                """
                 UPDATE users
                 SET user_points = user_points + 1
                 WHERE id = %s
-            """, (user_id,))
+            """,
+                (user_id,),
+            )
 
         conn.commit()
     return {
@@ -98,11 +103,10 @@ def mark_report_as_handled(report_id: int, handled_by: int, handled_image_bytes:
                     handled_by = %s
                 WHERE id = %s;
                 """,
-                (handled_image_path, handled_by, report_id)
+                (handled_image_path, handled_by, report_id),
             )
-
-
             conn.commit()
+
 
 def mark_report_as_handled_with_points(report_id: int, handled_by: int, handled_image_bytes: bytes = None):
     handled_image_path = None
@@ -119,17 +123,19 @@ def mark_report_as_handled_with_points(report_id: int, handled_by: int, handled_
                     handled_by = %s
                 WHERE id = %s;
                 """,
-                (handled_image_path, handled_by, report_id)
+                (handled_image_path, handled_by, report_id),
             )
 
-            
-            cur.execute("""
+            cur.execute(
+                """
                 UPDATE users
                 SET user_points = user_points + 2
                 WHERE id = %s
-            """, (handled_by,))
+            """,
+                (handled_by,),
+            )
 
-        conn.commit()            
+        conn.commit()
 
 
 def upload_report_image(file_bytes: bytes, report_id: int, is_handled: bool = False):
@@ -139,7 +145,7 @@ def upload_report_image(file_bytes: bytes, report_id: int, is_handled: bool = Fa
     supabase.storage.from_("LitterFreeCitiesImages").upload(
         path,
         file_bytes,
-        {"content-type": "image/jpeg", "upsert": "true"}
+        {"content-type": "image/jpeg", "upsert": "true"},
     )
     with psycopg.connect(database_url, sslmode="require") as conn:
         with conn.cursor() as cur:
@@ -151,46 +157,11 @@ def upload_report_image(file_bytes: bytes, report_id: int, is_handled: bool = Fa
     return path
 
 
-def get_all_reports_pandas_df():
-    with psycopg.connect(database_url, sslmode="require") as conn:
-        df = pd.read_sql("""
-            SELECT
-                r.id,
-
-                ST_X(r.position::geometry) AS lon,
-                ST_Y(r.position::geometry) AS lat,
-
-                r.title,
-                r.message,
-                r.created_at,
-
-                r.unhandled_image_path,
-
-                r.handled,
-                r.handled_at,
-                r.handled_image_path,
-
-                creator.username AS created_by_username,
-
-                handler.username AS handled_by_username
-
-            FROM reports r
-
-            LEFT JOIN users creator
-            ON r.created_by = creator.id
-
-            LEFT JOIN users handler
-            ON r.handled_by = handler.id
-
-            ORDER BY r.created_at DESC;
-        """, conn)
-    return df
-
-
 def get_all_reports():
     with psycopg.connect(database_url, sslmode="require") as conn:
         with conn.cursor() as cur:
-            cur.execute("""
+            cur.execute(
+                """
                 SELECT
                     r.id,
 
@@ -220,11 +191,85 @@ def get_all_reports():
                 ON r.handled_by = handler.id
 
                 ORDER BY r.created_at DESC;
-            """)
+            """
+            )
             columns = [desc[0] for desc in cur.description]
             rows = cur.fetchall()
     return [dict(zip(columns, row)) for row in rows]
 
+
+def sign_up_to_handle(report_id: int, user_id: int):
+    with psycopg.connect(database_url, sslmode="require") as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE reports
+                SET signed_up_by = %s,
+                    signed_up_at = NOW()
+                WHERE id = %s;
+                """,
+                (user_id, report_id),
+            )
+        conn.commit()
+
+    return {"report_id": report_id, "signed_up_by": user_id}
+
+
+def remove_signup_from_handle(report_id: int, user_id: int):
+    with psycopg.connect(database_url, sslmode="require") as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE reports
+                SET signed_up_by = NULL,
+                    signed_up_at = NULL
+                WHERE id = %s
+                  AND signed_up_by = %s;
+                """,
+                (report_id, user_id),
+            )
+        conn.commit()
+
+    return {"report_id": report_id, "signed_up_by": None}
+
+
+def get_all_reports_pandas_df():
+    with psycopg.connect(database_url, sslmode="require") as conn:
+        df = pd.read_sql(
+            """
+            SELECT
+                r.id,
+
+                ST_X(r.position::geometry) AS lon,
+                ST_Y(r.position::geometry) AS lat,
+
+                r.title,
+                r.message,
+                r.created_at,
+
+                r.unhandled_image_path,
+
+                r.handled,
+                r.handled_at,
+                r.handled_image_path,
+
+                creator.username AS created_by_username,
+
+                handler.username AS handled_by_username
+
+            FROM reports r
+
+            LEFT JOIN users creator
+            ON r.created_by = creator.id
+
+            LEFT JOIN users handler
+            ON r.handled_by = handler.id
+
+            ORDER BY r.created_at DESC;
+        """,
+            conn,
+        )
+    return df
 
 
 def get_top_users_by_points(limit: int = 10):
@@ -242,13 +287,12 @@ def get_top_users_by_points(limit: int = 10):
                 ORDER BY user_points DESC, username ASC
                 LIMIT %s;
                 """,
-                (limit,)
+                (limit,),
             )
             columns = [desc[0] for desc in cur.description]
             rows = cur.fetchall()
 
     return [dict(zip(columns, row)) for row in rows]
-
 
 
 def create_user(username: str, password: str):
@@ -260,7 +304,7 @@ def create_user(username: str, password: str):
                 VALUES (%s, %s)
                 RETURNING id, username;
                 """,
-                (username, password)
+                (username, password),
             )
 
             row = cur.fetchone()
@@ -282,7 +326,7 @@ def login_user(username: str, password: str):
                 WHERE username = %s
                 AND password = %s;
                 """,
-                (username, password)
+                (username, password),
             )
 
             row = cur.fetchone()
