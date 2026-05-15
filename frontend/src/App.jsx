@@ -1,11 +1,11 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Header from "./components/Header";
 import Navbar from "./components/NavBar.jsx";
 import ReportsPage from "./pages/ReportsPage.jsx";
 import SubmitPage from "./pages/SubmitPage";
 import LeaderboardPage from "./pages/LeaderboardPage";
-import AccountPage     from "./pages/AccountPage";
+import AccountPage from "./pages/AccountPage";
 import "./style.css";
 
 function App() {
@@ -49,7 +49,6 @@ function App() {
         <Header currentUser={currentUser} setCurrentUser={setCurrentUser} />
         <h1 className="text-center my-4">LitterFree Cities</h1>
 
-
         {!currentUser ? (
           <div className="login-box text-center">
             <h2>Please log in to continue</h2>
@@ -66,11 +65,11 @@ function App() {
             <Navbar />
             <div className="container">
               <Routes>
-                <Route path="/"        element={<Navigate to="/reports" replace />} />
+                <Route path="/" element={<Navigate to="/reports" replace />} />
                 <Route path="/reports" element={<ReportsPage {...sharedProps} />} />
-                <Route path="/submit"  element={<SubmitPage  {...sharedProps} />} />
+                <Route path="/submit" element={<SubmitPage {...sharedProps} />} />
                 <Route path="/leaderboard" element={<LeaderboardPage {...sharedProps} />} />
-                <Route path="/account"     element={<AccountPage     {...sharedProps} />} />
+                <Route path="/account" element={<AccountPage {...sharedProps} />} />
               </Routes>
             </div>
           </>

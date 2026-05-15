@@ -5,6 +5,7 @@ class ReportCreate(BaseModel):
     description: str = Field(min_length=1, max_length=1000)
     lon: float
     lat: float
+    user_id: int
 
 
 class LoginRequest(BaseModel):

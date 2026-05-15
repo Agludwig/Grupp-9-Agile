@@ -19,7 +19,7 @@ function LocationPicker({ onLocationSelect }) {
   return null;
 }
 
-function ReportForm({ onSubmit }) {
+function ReportForm({ onSubmit, currentUser }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [selectedLocation, setSelectedLocation] = useState(null);
@@ -44,7 +44,7 @@ function ReportForm({ onSubmit }) {
     const res = await fetch("http://127.0.0.1:8000/reports", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, description, lat: selectedLocation.lat, lon: selectedLocation.lon }),
+      body: JSON.stringify({ title, description, lat: selectedLocation.lat, lon: selectedLocation.lon, user_id: currentUser.id}),
     });
 
     if (!res.ok) { const d = await res.json(); setError(d.detail || "Something went wrong."); return; }

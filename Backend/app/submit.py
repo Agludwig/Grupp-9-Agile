@@ -1,4 +1,4 @@
-from db import add_report
+from db import add_report_with_points
 from models import ReportCreate
 
 def validate_report(report: ReportCreate) -> tuple[bool, str | None]:
@@ -19,12 +19,14 @@ def submit_report(report: ReportCreate) -> dict:
     
     if not is_valid:
         raise ValueError(error)
-    
-    report_data = add_report(
+   
+    report_data = add_report_with_points(
         lon=report.lon,
         lat=report.lat, 
         title=report.title,
-        message=report.description
+        message=report.description,
+        user_id=report.user_id
+        
     )
 
     return {

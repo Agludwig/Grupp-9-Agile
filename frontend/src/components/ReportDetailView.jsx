@@ -4,11 +4,13 @@ import { useEffect } from "react";
 
 function ReportDetailView({
   report,
+  currentUser,
   onClose,
   onSignup,
   onMarkAsHandled,
   onRefresh,
 }) {
+
   useEffect(() => {
     document.body.classList.add("no-scroll");
 
@@ -16,12 +18,37 @@ function ReportDetailView({
       document.body.classList.remove("no-scroll");
     };
   }, []);
+
   if (!report) return null;
+
+  const handleMarkAsHandled = async () => {
+    const formData = new FormData();
+
+    formData.append(
+      "handled_by",
+      currentUser.id
+    );
+
+    const response = await fetch(
+      `http://127.0.0.1:8000/reports/${report.id}/handle`,
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+
+    if (response.ok) {
+      onRefresh();
+      onClose();
+    } else {
+      alert("Failed to mark report as handled");
+    }
+  };
 
   const baseUrl = import.meta.env.VITE_SUPABASE_URL;
   const imagePath = report.unhandled_image_path
-    ? `${baseUrl}/storage/v1/object/public/LitterFreeCitiesImages/${report.unhandled_image_path}`
-    : null;
+  ? `${baseUrl}/storage/v1/object/public/LitterFreeCitiesImages/${report.unhandled_image_path}`
+  : null;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -40,6 +67,19 @@ function ReportDetailView({
           <p>
             <strong>Description:</strong> {report.message}
           </p>
+
+          <p>
+            <strong>Created by:</strong>{" "}
+            {report.created_by_username || "Unknown"}
+          </p>
+
+          {report.handled && (
+            <p>
+              <strong>Handled by:</strong>{" "}
+              {report.handled_by_username || "Unknown"}
+            </p>
+          )}
+
           <p className="meta">
             Reported: {new Date(report.created_at).toLocaleString()}
           </p>
@@ -71,7 +111,7 @@ function ReportDetailView({
           {report.assigned_to && !report.handled && (
             <button
               className="btn btn-success w-100"
-              onClick={() => onMarkAsHandled(report.id)}
+              onClick={handleMarkAsHandled}
             >
               Mark as Cleaned
             </button>

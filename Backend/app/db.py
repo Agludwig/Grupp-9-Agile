@@ -15,20 +15,26 @@ supabase_key: str = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(supabase_url, supabase_key)
 
 
-def add_report(lon: float, lat: float, title: str, message: str):
+def add_report(lon: float, lat: float, title: str, message: str, user_id: int):
     with psycopg.connect(database_url, sslmode="require") as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
-                INSERT INTO reports (position, title, message)
-                VALUES (
-                    ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography,
-                    %s,
-                    %s
-                )
+                INSERT INTO reports (
+                        position,
+                        title,
+                        message,
+                        created_by
+                    )
+                    VALUES (
+                        ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography,
+                        %s,
+                        %s,
+                        %s
+                    )
                 RETURNING id, title, message, created_at;
                 """,
-                (lon, lat, title, message)
+                (lon, lat, title, message, user_id)
             )
             row = cur.fetchone()
             conn.commit()
@@ -38,9 +44,46 @@ def add_report(lon: float, lat: float, title: str, message: str):
         "message": row[2],
         "created_at": row[3],
     }
+# something like tthis to add points with adding repor. copy to method above. 
+def add_report_with_points(lon: float, lat: float, title: str, message: str, user_id: int):
+    with psycopg.connect(database_url, sslmode="require") as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO reports (
+                        position,
+                        title,
+                        message,
+                        created_by
+                    )
+                    VALUES (
+                        ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography,
+                        %s,
+                        %s,
+                        %s
+                    )
+                RETURNING id, title, message, created_at;
+                """,
+                (lon, lat, title, message, user_id)
+            )
+            row = cur.fetchone()
+
+            cur.execute("""
+                UPDATE users
+                SET user_points = user_points + 1
+                WHERE id = %s
+            """, (user_id,))
+
+        conn.commit()
+    return {
+        "id": row[0],
+        "title": row[1],
+        "message": row[2],
+        "created_at": row[3],
+    }
 
 
-def mark_report_as_handled(report_id: int, handled_image_bytes: bytes = None):
+def mark_report_as_handled(report_id: int, handled_by: int, handled_image_bytes: bytes = None):
     handled_image_path = None
     if handled_image_bytes:
         handled_image_path = upload_report_image(handled_image_bytes, report_id, is_handled=True)
@@ -51,12 +94,42 @@ def mark_report_as_handled(report_id: int, handled_image_bytes: bytes = None):
                 UPDATE reports
                 SET handled = TRUE,
                     handled_at = NOW(),
-                    handled_image_path = %s
+                    handled_image_path = %s,
+                    handled_by = %s
                 WHERE id = %s;
                 """,
-                (handled_image_path, report_id)
+                (handled_image_path, handled_by, report_id)
             )
+
+
             conn.commit()
+
+def mark_report_as_handled_with_points(report_id: int, handled_by: int, handled_image_bytes: bytes = None):
+    handled_image_path = None
+    if handled_image_bytes:
+        handled_image_path = upload_report_image(handled_image_bytes, report_id, is_handled=True)
+    with psycopg.connect(database_url, sslmode="require") as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE reports
+                SET handled = TRUE,
+                    handled_at = NOW(),
+                    handled_image_path = %s,
+                    handled_by = %s
+                WHERE id = %s;
+                """,
+                (handled_image_path, handled_by, report_id)
+            )
+
+            
+            cur.execute("""
+                UPDATE users
+                SET user_points = user_points + 2
+                WHERE id = %s
+            """, (handled_by,))
+
+        conn.commit()            
 
 
 def upload_report_image(file_bytes: bytes, report_id: int, is_handled: bool = False):
@@ -82,18 +155,34 @@ def get_all_reports_pandas_df():
     with psycopg.connect(database_url, sslmode="require") as conn:
         df = pd.read_sql("""
             SELECT
-                id,
-                ST_X(position::geometry) AS lon,
-                ST_Y(position::geometry) AS lat,
-                title,
-                message,
-                created_at,
-                unhandled_image_path,
-                handled,
-                handled_at,
-                handled_image_path
-            FROM reports
-            ORDER BY created_at DESC;
+                r.id,
+
+                ST_X(r.position::geometry) AS lon,
+                ST_Y(r.position::geometry) AS lat,
+
+                r.title,
+                r.message,
+                r.created_at,
+
+                r.unhandled_image_path,
+
+                r.handled,
+                r.handled_at,
+                r.handled_image_path,
+
+                creator.username AS created_by_username,
+
+                handler.username AS handled_by_username
+
+            FROM reports r
+
+            LEFT JOIN users creator
+            ON r.created_by = creator.id
+
+            LEFT JOIN users handler
+            ON r.handled_by = handler.id
+
+            ORDER BY r.created_at DESC;
         """, conn)
     return df
 
@@ -103,21 +192,61 @@ def get_all_reports():
         with conn.cursor() as cur:
             cur.execute("""
                 SELECT
-                    id,
-                    ST_X(position::geometry) AS lon,
-                    ST_Y(position::geometry) AS lat,
-                    title,
-                    message,
-                    created_at,
-                    unhandled_image_path,
-                    handled,
-                    handled_at,
-                    handled_image_path
-                FROM reports
-                ORDER BY created_at DESC;
+                    r.id,
+
+                    ST_X(r.position::geometry) AS lon,
+                    ST_Y(r.position::geometry) AS lat,
+
+                    r.title,
+                    r.message,
+                    r.created_at,
+
+                    r.unhandled_image_path,
+
+                    r.handled,
+                    r.handled_at,
+                    r.handled_image_path,
+
+                    creator.username AS created_by_username,
+
+                    handler.username AS handled_by_username
+
+                FROM reports r
+
+                LEFT JOIN users creator
+                ON r.created_by = creator.id
+
+                LEFT JOIN users handler
+                ON r.handled_by = handler.id
+
+                ORDER BY r.created_at DESC;
             """)
             columns = [desc[0] for desc in cur.description]
             rows = cur.fetchall()
+    return [dict(zip(columns, row)) for row in rows]
+
+
+
+def get_top_users_by_points(limit: int = 10):
+    if limit <= 0:
+        return []
+
+    with psycopg.connect(database_url, sslmode="require") as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT
+                    username AS user_name,
+                    user_points AS points
+                FROM users
+                ORDER BY user_points DESC, username ASC
+                LIMIT %s;
+                """,
+                (limit,)
+            )
+            columns = [desc[0] for desc in cur.description]
+            rows = cur.fetchall()
+
     return [dict(zip(columns, row)) for row in rows]
 
 
