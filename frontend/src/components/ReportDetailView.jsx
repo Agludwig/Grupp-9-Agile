@@ -44,15 +44,15 @@ function ReportDetailView({
             Reported: {new Date(report.created_at).toLocaleString()}
           </p>
 
-          {report.assigned_to && (
+          {report.signed_up_by && (
             <>
               <p>
-                <strong>Assigned to:</strong> {report.assigned_to}
+                <strong>Assigned to:</strong> {report.signed_up_by}
               </p>
 
               <p>
                 <strong>Assigned at:</strong>{" "}
-                {new Date(report.assigned_at).toLocaleString()}
+                {new Date(report.signed_up_by).toLocaleString()}
               </p>
             </>
           )}

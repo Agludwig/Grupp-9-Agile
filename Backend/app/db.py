@@ -116,9 +116,8 @@ def get_all_reports():
                     handled,
                     handled_at,
                     handled_image_path,
-                    assigned_to,
+                    signed_up_by,
                     assigned_at,
-                    claimer_points
                 FROM reports
                 ORDER BY created_at DESC;
             """)
@@ -178,8 +177,8 @@ def sign_up_report(report_id: int, username: str):
             cur.execute(
                 """
                 UPDATE reports
-                SET assigned_to = %s,
-                    assigned_at = NOW(),
+                SET signed_up_by = %s,
+                    signed_up_at = NOW(),
                 WHERE id = %s;
                 """,
                 (username, report_id)
@@ -192,8 +191,8 @@ def reset_expired_report():
             cur.execute(
                 """
                 UPDATE reports
-                SET assigned_to = NULL,
-                    assigned_at = NULL,
+                SET signed_up_by = NULL,
+                    signed_up_at = NULL,
                 WHERE assigned_at < NOW() - INTERVAL '1 day'
                 AND handled = FALSE;
                 """
