@@ -1,6 +1,6 @@
 ﻿from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
-from db import get_all_reports, upload_report_image, mark_report_as_handled_with_points, sign_up_to_handle, remove_signup_from_handle
+from db import get_all_reports, upload_report_image, mark_report_as_handled_with_points, sign_up_to_handle, remove_signup_from_handle, get_top_users_by_points
 from models import ReportCreate
 from submit import submit_report
 from login import router as login_router
@@ -19,6 +19,14 @@ app.include_router(login_router)
 @app.get("/reports")
 def get_reports():
     return get_all_reports()
+
+
+@app.get("/leaderboard")
+def get_leaderboard(limit: int = 10):
+    try:
+        return get_top_users_by_points(limit)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/reports")
 def create_report(report: ReportCreate):

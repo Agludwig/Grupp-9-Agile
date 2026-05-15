@@ -77,6 +77,38 @@ def test_get_reports_endpoint(client, monkeypatch):
 	assert response.json() == [{'id': 1, 'title': 'Report A'}]
 
 
+def test_get_leaderboard_endpoint_default_limit(client, monkeypatch):
+	called = {}
+
+	def fake_get_top_users_by_points(limit=10):
+		called['limit'] = limit
+		return [{'user_name': 'alice', 'points': 15}]
+
+	monkeypatch.setattr(main, 'get_top_users_by_points', fake_get_top_users_by_points)
+
+	response = client.get('/leaderboard')
+
+	assert response.status_code == 200
+	assert response.json() == [{'user_name': 'alice', 'points': 15}]
+	assert called['limit'] == 10
+
+
+def test_get_leaderboard_endpoint_custom_limit(client, monkeypatch):
+	called = {}
+
+	def fake_get_top_users_by_points(limit=10):
+		called['limit'] = limit
+		return [{'user_name': 'bob', 'points': 8}]
+
+	monkeypatch.setattr(main, 'get_top_users_by_points', fake_get_top_users_by_points)
+
+	response = client.get('/leaderboard?limit=3')
+
+	assert response.status_code == 200
+	assert response.json() == [{'user_name': 'bob', 'points': 8}]
+	assert called['limit'] == 3
+
+
 def test_create_report_endpoint_success(client, monkeypatch):
 	def fake_submit_report(report):
 		assert isinstance(report, ReportCreate)
