@@ -74,8 +74,7 @@ def add_report_with_points(lon: float, lat: float, title: str, message: str, use
                 WHERE id = %s
             """, (user_id,))
 
-
-            conn.commit()
+        conn.commit()
     return {
         "id": row[0],
         "title": row[1],
@@ -130,7 +129,7 @@ def mark_report_as_handled_with_points(report_id: int, handled_by: int, handled_
                 WHERE id = %s
             """, (handled_by,))
 
-            conn.commit()            
+        conn.commit()            
 
 
 def upload_report_image(file_bytes: bytes, report_id: int, is_handled: bool = False):

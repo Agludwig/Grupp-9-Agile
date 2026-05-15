@@ -1,6 +1,6 @@
 ﻿from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
-from db import get_all_reports, add_report, upload_report_image, mark_report_as_handled
+from db import get_all_reports, upload_report_image, mark_report_as_handled_with_points
 from models import ReportCreate
 from submit import submit_report
 from login import router as login_router
@@ -47,11 +47,14 @@ async def handle_report(
 ):
     try:
         file_bytes = await file.read() if file else None
-        mark_report_as_handled(
+        """  mark_report_as_handled(
                 report_id,
                 handled_by,
                 file_bytes
-            )
+            ) """
+        mark_report_as_handled_with_points(report_id, handled_by, file_bytes)
+        
+        
         return {"message": "Report marked as handled"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
