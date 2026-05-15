@@ -48,7 +48,7 @@ function App() {
       <div className="app-container">
         <Header currentUser={currentUser} setCurrentUser={setCurrentUser} />
         <h1 className="text-center my-4">LitterFree Cities</h1>
-        <Navbar />
+
 
         {!currentUser ? (
           <div className="login-box text-center">
@@ -62,15 +62,18 @@ function App() {
             />
           </div>
         ) : (
-          <div className="container">
-            <Routes>
-              <Route path="/"        element={<Navigate to="/reports" replace />} />
-              <Route path="/reports" element={<ReportsPage {...sharedProps} />} />
-              <Route path="/submit"  element={<SubmitPage  {...sharedProps} />} />
-              <Route path="/leaderboard" element={<LeaderboardPage {...sharedProps} />} />
-              <Route path="/account"     element={<AccountPage     {...sharedProps} />} />
-            </Routes>
-          </div>
+          <>
+            <Navbar />
+            <div className="container">
+              <Routes>
+                <Route path="/"        element={<Navigate to="/reports" replace />} />
+                <Route path="/reports" element={<ReportsPage {...sharedProps} />} />
+                <Route path="/submit"  element={<SubmitPage  {...sharedProps} />} />
+                <Route path="/leaderboard" element={<LeaderboardPage {...sharedProps} />} />
+                <Route path="/account"     element={<AccountPage     {...sharedProps} />} />
+              </Routes>
+            </div>
+          </>
         )}
       </div>
     </BrowserRouter>
