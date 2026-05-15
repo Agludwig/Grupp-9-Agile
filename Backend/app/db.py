@@ -227,6 +227,30 @@ def get_all_reports():
 
 
 
+def get_top_users_by_points(limit: int = 10):
+    if limit <= 0:
+        return []
+
+    with psycopg.connect(database_url, sslmode="require") as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT
+                    username AS user_name,
+                    user_points AS points
+                FROM users
+                ORDER BY user_points DESC, username ASC
+                LIMIT %s;
+                """,
+                (limit,)
+            )
+            columns = [desc[0] for desc in cur.description]
+            rows = cur.fetchall()
+
+    return [dict(zip(columns, row)) for row in rows]
+
+
+
 def create_user(username: str, password: str):
     with psycopg.connect(database_url, sslmode="require") as conn:
         with conn.cursor() as cur:
