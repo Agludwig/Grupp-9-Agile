@@ -35,12 +35,14 @@ create table reports (
 
 create index IF not exists idx_reports_position on public.reports using gist ("position") TABLESPACE pg_default;
 
+
 create table users (
   id bigserial not null,
   username text not null,
   password text not null,
   user_email text null,
   user_points bigint not null default '0'::bigint,
+  profile_picture_path text null,
   constraint users_pkey primary key (id),
   constraint users_user_email_key unique (user_email),
   constraint users_username_key unique (username)
