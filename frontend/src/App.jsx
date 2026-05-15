@@ -1,9 +1,11 @@
-﻿import { useState, useEffect } from "react";
-import ReportForm from "./components/ReportForm";
-import List from "./components/List";
+import { useState, useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Header from "./components/Header";
-import ReportMap from "./components/ReportMap";
-import ReportDetailView from "./components/ReportDetailView";
+import Navbar from "./components/NavBar.jsx";
+import ReportsPage from "./pages/ReportsPage.jsx";
+import SubmitPage from "./pages/SubmitPage";
+import LeaderboardPage from "./pages/LeaderboardPage";
+import AccountPage from "./pages/AccountPage";
 import "./style.css";
 
 function App() {
@@ -32,59 +34,48 @@ function App() {
     }
   };
 
+  const sharedProps = {
+    reports,
+    currentUser,
+    selectedReport,
+    setSelectedReport,
+    onRefresh: () => setRefresh((prev) => prev + 1),
+    onSubmit: handleSubmit,
+  };
+
   return (
-    <div className="app-container">
-      <Header currentUser={currentUser} setCurrentUser={setCurrentUser} />
+    <BrowserRouter>
+      <div className="app-container">
+        <Header currentUser={currentUser} setCurrentUser={setCurrentUser} />
+        <h1 className="text-center my-4">LitterFree Cities</h1>
 
-      <h1 className="text-center my-4">LitterFree Cities</h1>
-
-      {!currentUser ? (
-        <div className="login-box text-center">
-          <h2>Please log in to continue</h2>
-          <p>You must be logged in to create and view reports.</p>
-          <img
-            src="/eco-city.png"
-            alt="Eco city"
-            className="login-image"
-            style={{ maxWidth: "300px", marginTop: "1rem" }}
-          />
-        </div>
-      ) : (
-        <div className="container">
-          <div className="row">
-            <div className="col-md-12">
-              <ReportForm
-                  onSubmit={handleSubmit}
-                  currentUser={currentUser}
-                />
-            </div>
-          </div>
-
-          <div className="row mt-5">
-            <div className="col-md-12">
-              <h2>Map Overview</h2>
-              <ReportMap reports={reports} onSelectReport={setSelectedReport} />
-            </div>
-          </div>
-
-          <div className="row mt-4">
-            <div className="col-md-12">
-              <h2>All Submitted Reports</h2>
-              <List reports={reports} onSelectReport={setSelectedReport} />
-            </div>
-          </div>
-
-          {selectedReport && (
-            <ReportDetailView
-              report={selectedReport}
-              currentUser={currentUser}
-              onClose={() => setSelectedReport(null)}
-              onRefresh={() => setRefresh((prev) => prev + 1)}
+        {!currentUser ? (
+          <div className="login-box text-center">
+            <h2>Please log in to continue</h2>
+            <p>You must be logged in to create and view reports.</p>
+            <img
+              src="/eco-city.png"
+              alt="Eco city"
+              className="login-image"
+              style={{ maxWidth: "300px", marginTop: "1rem" }}
             />
-          )}
-        </div>
-      )}
-    </div>
+          </div>
+        ) : (
+          <>
+            <Navbar />
+            <div className="container">
+              <Routes>
+                <Route path="/" element={<Navigate to="/reports" replace />} />
+                <Route path="/reports" element={<ReportsPage {...sharedProps} />} />
+                <Route path="/submit" element={<SubmitPage {...sharedProps} />} />
+                <Route path="/leaderboard" element={<LeaderboardPage {...sharedProps} />} />
+                <Route path="/account" element={<AccountPage {...sharedProps} />} />
+              </Routes>
+            </div>
+          </>
+        )}
+      </div>
+    </BrowserRouter>
   );
 }
 
