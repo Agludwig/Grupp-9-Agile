@@ -72,10 +72,16 @@ async def handle_report(
 def signup_report(report_id: int, user_id: int = Form(...)):
     try:
         result = sign_up_to_handle(report_id, user_id)
-        return {"message": "User signed up to handle report", **result}
+        return {
+            "message": "User signed up to handle report",
+            **result
+        }
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @app.post("/reports/{report_id}/signup/remove")
 def remove_signup_report(report_id: int, user_id: int = Form(...)):

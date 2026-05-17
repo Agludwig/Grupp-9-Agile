@@ -120,10 +120,18 @@ def mark_report_as_handled_with_points(report_id: int, handled_by: int, handled_
                 SET handled = TRUE,
                     handled_at = NOW(),
                     handled_image_path = %s,
-                    handled_by = %s
-                WHERE id = %s;
+                    handled_by = %s,
+                    signed_up_by = NULL,
+                    signed_up_at = NULL
+                WHERE id = %s
+                AND signed_up_by = %s;
                 """,
-                (handled_image_path, handled_by, report_id),
+                (
+                    handled_image_path,
+                    handled_by,
+                    report_id,
+                    handled_by,
+                ),
             )
 
             cur.execute(
@@ -177,15 +185,29 @@ def get_all_reports():
                     r.handled,
                     r.handled_at,
                     r.handled_image_path,
+                    r.signed_up_by,
+                    r.signed_up_at,
+
+                    CASE
+                        WHEN r.signed_up_at > NOW() - INTERVAL '1 day'
+                        THEN TRUE
+                        ELSE FALSE
+                    END AS assignment_active,
 
                     creator.username AS created_by_username,
 
-                    handler.username AS handled_by_username
+                    handler.username AS handled_by_username,
+
+                    signup_user.username AS signed_up_by_username,
+                    signup_user.user_points AS signed_up_by_points
 
                 FROM reports r
 
                 LEFT JOIN users creator
                 ON r.created_by = creator.id
+
+                LEFT JOIN users signup_user
+                ON r.signed_up_by = signup_user.id
 
                 LEFT JOIN users handler
                 ON r.handled_by = handler.id
@@ -201,18 +223,34 @@ def get_all_reports():
 def sign_up_to_handle(report_id: int, user_id: int):
     with psycopg.connect(database_url, sslmode="require") as conn:
         with conn.cursor() as cur:
+
             cur.execute(
                 """
                 UPDATE reports
                 SET signed_up_by = %s,
                     signed_up_at = NOW()
-                WHERE id = %s;
+                WHERE id = %s
+                  AND handled = FALSE
+                  AND (
+                        signed_up_by IS NULL
+                        OR signed_up_at < NOW() - INTERVAL '1 day'
+                  )
+                RETURNING id;
                 """,
                 (user_id, report_id),
             )
+
+            row = cur.fetchone()
+
         conn.commit()
 
-    return {"report_id": report_id, "signed_up_by": user_id}
+    if not row:
+        raise ValueError("Report already assigned")
+
+    return {
+        "report_id": report_id,
+        "signed_up_by": user_id,
+    }
 
 
 def remove_signup_from_handle(report_id: int, user_id: int):

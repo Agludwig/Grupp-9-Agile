@@ -6,11 +6,9 @@ function ReportDetailView({
   report,
   currentUser,
   onClose,
-  onSignup,
   onMarkAsHandled,
   onRefresh,
 }) {
-
   useEffect(() => {
     document.body.classList.add("no-scroll");
 
@@ -24,17 +22,14 @@ function ReportDetailView({
   const handleMarkAsHandled = async () => {
     const formData = new FormData();
 
-    formData.append(
-      "handled_by",
-      currentUser.id
-    );
+    formData.append("handled_by", currentUser.id);
 
     const response = await fetch(
       `http://127.0.0.1:8000/reports/${report.id}/handle`,
       {
         method: "POST",
         body: formData,
-      }
+      },
     );
 
     if (response.ok) {
@@ -45,10 +40,53 @@ function ReportDetailView({
     }
   };
 
+  const handleSignup = async (reportId) => {
+    const formData = new FormData();
+
+    formData.append("user_id", currentUser.id);
+
+    const response = await fetch(
+      `http://127.0.0.1:8000/reports/${reportId}/signup`,
+      {
+        method: "POST",
+        body: formData,
+      },
+    );
+
+    if (response.ok) {
+      await onRefresh();
+      onClose();
+    } else {
+      const data = await response.json();
+      alert(data.detail);
+    }
+  };
+
+  const handleUnsignup = async (reportId) => {
+    const formData = new FormData();
+    formData.append("user_id", currentUser.id);
+
+    const response = await fetch(
+      `http://127.0.0.1:8000/reports/${reportId}/signup/remove`,
+      {
+        method: "POST",
+        body: formData,
+      },
+    );
+
+    if (response.ok) {
+      await onRefresh();
+      onClose();
+    } else {
+      const data = await response.json();
+      alert(data.detail);
+    }
+  };
+
   const baseUrl = import.meta.env.VITE_SUPABASE_URL;
   const imagePath = report.unhandled_image_path
-  ? `${baseUrl}/storage/v1/object/public/LitterFreeCitiesImages/${report.unhandled_image_path}`
-  : null;
+    ? `${baseUrl}/storage/v1/object/public/LitterFreeCitiesImages/${report.unhandled_image_path}`
+    : null;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -98,24 +136,42 @@ function ReportDetailView({
           </MapContainer>
         </div>
 
+        {report.assignment_active && !report.handled && (
+          <p>
+            <strong>Assigned to:</strong> {report.signed_up_by_username} (
+            {report.signed_up_by_points} pts)
+          </p>
+        )}
+
         <div className="actions" style={{ marginTop: "1rem" }}>
-          {!report.assigned_to && !report.handled && (
+          {!report.assignment_active && !report.handled && (
             <button
               className="btn btn-primary w-100"
-              onClick={() => onSignup(report.id)}
+              onClick={() => handleSignup(report.id)}
             >
               Sign up to cleaning
             </button>
           )}
 
-          {report.assigned_to && !report.handled && (
-            <button
-              className="btn btn-success w-100"
-              onClick={handleMarkAsHandled}
-            >
-              Mark as Cleaned
-            </button>
-          )}
+          {report.assignment_active &&
+            report.signed_up_by === currentUser.id &&
+            !report.handled && (
+              <>
+                <button
+                  className="btn btn-success w-100"
+                  onClick={handleMarkAsHandled}
+                >
+                  Mark as Cleaned
+                </button>
+
+                <button
+                  className="btn btn-outline-danger w-100 mt-2"
+                  onClick={() => handleUnsignup(report.id)}
+                >
+                  Cancel assignment
+                </button>
+              </>
+            )}
 
           {report.handled && (
             <div className="alert alert-success">
