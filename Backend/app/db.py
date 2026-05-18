@@ -121,10 +121,20 @@ def mark_report_as_handled_with_points(report_id: int, handled_by: int, handled_
                     handled_at = NOW(),
                     handled_image_path = %s,
                     handled_by = %s
-                WHERE id = %s;
+                WHERE id = %s
+                  AND handled = FALSE
+                  AND (
+                    signed_up_by = %s
+                    OR signed_up_by IS NULL
+                  )
+                RETURNING id;
                 """,
-                (handled_image_path, handled_by, report_id),
+                (handled_image_path, handled_by, report_id, handled_by),
             )
+
+            updated_report = cur.fetchone()
+            if not updated_report:
+                raise ValueError("Report is already handled or assigned to another user")
 
             cur.execute(
                 """
@@ -158,6 +168,9 @@ def upload_report_image(file_bytes: bytes, report_id: int, is_handled: bool = Fa
 
 
 def get_all_reports():
+
+    reset_expired_signup()
+
     with psycopg.connect(database_url, sslmode="require") as conn:
         with conn.cursor() as cur:
             cur.execute(
@@ -180,7 +193,14 @@ def get_all_reports():
 
                     creator.username AS created_by_username,
 
-                    handler.username AS handled_by_username
+                    handler.username AS handled_by_username,
+
+                    r.signed_up_by,
+
+                    signup.username AS signed_up_by_username,
+                    signup.user_points AS signed_up_by_points,
+                    
+                    r.signed_up_at
 
                 FROM reports r
 
@@ -190,47 +210,15 @@ def get_all_reports():
                 LEFT JOIN users handler
                 ON r.handled_by = handler.id
 
+                LEFT JOIN users signup
+                ON r.signed_up_by = signup.id
+
                 ORDER BY r.created_at DESC;
             """
             )
             columns = [desc[0] for desc in cur.description]
             rows = cur.fetchall()
     return [dict(zip(columns, row)) for row in rows]
-
-
-def sign_up_to_handle(report_id: int, user_id: int):
-    with psycopg.connect(database_url, sslmode="require") as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                UPDATE reports
-                SET signed_up_by = %s,
-                    signed_up_at = NOW()
-                WHERE id = %s;
-                """,
-                (user_id, report_id),
-            )
-        conn.commit()
-
-    return {"report_id": report_id, "signed_up_by": user_id}
-
-
-def remove_signup_from_handle(report_id: int, user_id: int):
-    with psycopg.connect(database_url, sslmode="require") as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                UPDATE reports
-                SET signed_up_by = NULL,
-                    signed_up_at = NULL
-                WHERE id = %s
-                  AND signed_up_by = %s;
-                """,
-                (report_id, user_id),
-            )
-        conn.commit()
-
-    return {"report_id": report_id, "signed_up_by": None}
 
 
 def get_all_reports_pandas_df():
@@ -338,3 +326,60 @@ def login_user(username: str, password: str):
         }
 
     return None
+
+def sign_up_to_handle(report_id: int, user_id: int):
+    with psycopg.connect(database_url, sslmode="require") as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE reports
+                SET signed_up_by = %s,
+                    signed_up_at = NOW()
+                WHERE id = %s
+                  AND handled = FALSE
+                  AND signed_up_by IS NULL
+                RETURNING id;
+                """,
+                (user_id, report_id),
+            )
+
+            updated_report = cur.fetchone()
+            if not updated_report:
+                raise ValueError("Report is already handled or assigned")
+        conn.commit()
+
+    return {"report_id": report_id, "signed_up_by": user_id}
+
+
+def remove_signup_from_handle(report_id: int, user_id: int):
+    with psycopg.connect(database_url, sslmode="require") as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE reports
+                SET signed_up_by = NULL,
+                    signed_up_at = NULL
+                WHERE id = %s
+                  AND signed_up_by = %s;
+                """,
+                (report_id, user_id),
+            )
+        conn.commit()
+
+    return {"report_id": report_id, "signed_up_by": None}
+
+
+def reset_expired_signup():
+    with psycopg.connect(database_url, sslmode="require") as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE reports
+                SET signed_up_by = NULL,
+                    signed_up_at = NULL
+                WHERE signed_up_at < NOW() - INTERVAL '1 day'
+                  AND handled = FALSE;
+                """
+            )
+
+        conn.commit()

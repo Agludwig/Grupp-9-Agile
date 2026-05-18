@@ -7,7 +7,6 @@ function ReportDetailView({
   currentUser,
   onClose,
   onSignup,
-  onMarkAsHandled,
   onRefresh,
 }) {
 
@@ -20,6 +19,9 @@ function ReportDetailView({
   }, []);
 
   if (!report) return null;
+
+  const isSignedUp = report.signed_up_by !== null && report.signed_up_by !== undefined;
+  const signedUpByCurrentUser = currentUser?.id === report.signed_up_by;
 
   const handleMarkAsHandled = async () => {
     const formData = new FormData();
@@ -47,8 +49,8 @@ function ReportDetailView({
 
   const baseUrl = import.meta.env.VITE_SUPABASE_URL;
   const imagePath = report.unhandled_image_path
-  ? `${baseUrl}/storage/v1/object/public/LitterFreeCitiesImages/${report.unhandled_image_path}`
-  : null;
+    ? `${baseUrl}/storage/v1/object/public/LitterFreeCitiesImages/${report.unhandled_image_path}`
+    : null;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -83,6 +85,24 @@ function ReportDetailView({
           <p className="meta">
             Reported: {new Date(report.created_at).toLocaleString()}
           </p>
+          {report.signed_up_by_username && (
+            <>
+              <p>
+                <strong> Signed up by:</strong>{" "}
+                {report.signed_up_by_username}
+              </p>
+
+              <p>
+                <strong>Points:</strong>{" "}
+                {report.signed_up_by_points ?? 0}
+              </p>
+
+              <p>
+                <strong>Signed up at:</strong>{" "}
+                {new Date(report.signed_up_at).toLocaleString()}
+              </p>
+            </>
+          )}
         </div>
 
         {/* Small map inside the view */}
@@ -99,22 +119,37 @@ function ReportDetailView({
         </div>
 
         <div className="actions" style={{ marginTop: "1rem" }}>
-          {!report.assigned_to && !report.handled && (
-            <button
-              className="btn btn-primary w-100"
-              onClick={() => onSignup(report.id)}
-            >
-              Sign up to cleaning
-            </button>
+          {!isSignedUp && !report.handled && (
+            <>
+              <button
+                className="btn btn-primary w-100"
+                onClick={() => onSignup(report.id)}
+              >
+                Sign up to cleaning
+              </button>
+
+              <button
+                className="btn btn-success w-100 mt-2"
+                onClick={handleMarkAsHandled}
+              >
+                Mark as Cleaned
+              </button>
+            </>
           )}
 
-          {report.assigned_to && !report.handled && (
+          {signedUpByCurrentUser && !report.handled && (
             <button
               className="btn btn-success w-100"
               onClick={handleMarkAsHandled}
             >
               Mark as Cleaned
             </button>
+          )}
+
+          {isSignedUp && !signedUpByCurrentUser && !report.handled && (
+            <div className="alert alert-info">
+              This report is currently assigned to {report.signed_up_by_username}.
+            </div>
           )}
 
           {report.handled && (

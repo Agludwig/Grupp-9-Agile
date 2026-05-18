@@ -65,7 +65,7 @@ async def handle_report(
         
         return {"message": "Report marked as handled"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @app.post("/reports/{report_id}/signup")
@@ -74,7 +74,7 @@ def signup_report(report_id: int, user_id: int = Form(...)):
         result = sign_up_to_handle(report_id, user_id)
         return {"message": "User signed up to handle report", **result}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @app.post("/reports/{report_id}/signup/remove")
