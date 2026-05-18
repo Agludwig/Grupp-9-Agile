@@ -2,7 +2,7 @@ import ReportMap from "../components/ReportMap";
 import List from "../components/List";
 import ReportDetailView from "../components/ReportDetailView";
 
-export default function ReportsPage({ reports, selectedReport, setSelectedReport, onRefresh }) {
+export default function ReportsPage({ reports, currentUser, selectedReport, setSelectedReport, onRefresh, onSignup }) {
   return (
     <>
       <h2>Map Overview</h2>
@@ -14,7 +14,9 @@ export default function ReportsPage({ reports, selectedReport, setSelectedReport
       {selectedReport && (
         <ReportDetailView
           report={selectedReport}
+          currentUser={currentUser}
           onClose={() => setSelectedReport(null)}
+          onSignup={onSignup}
           onRefresh={onRefresh}
         />
       )}
