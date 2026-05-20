@@ -7,6 +7,7 @@ function ReportDetailView({
   currentUser,
   onClose,
   onSignup,
+  onUnassign,
   onRefresh,
 }) {
 
@@ -138,12 +139,21 @@ function ReportDetailView({
           )}
 
           {signedUpByCurrentUser && !report.handled && (
-            <button
-              className="btn btn-success w-100"
-              onClick={handleMarkAsHandled}
-            >
-              Mark as Cleaned
-            </button>
+            <>
+              <button
+                className="btn btn-outline-secondary w-100"
+                onClick={() => onUnassign(report.id)}
+              >
+                Unassign
+              </button>
+
+              <button
+                className="btn btn-success w-100 mt-2"
+                onClick={handleMarkAsHandled}
+              >
+                Mark as Cleaned
+              </button>
+            </>
           )}
 
           {isSignedUp && !signedUpByCurrentUser && !report.handled && (

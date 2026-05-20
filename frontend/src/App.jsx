@@ -66,6 +66,33 @@ function App() {
     }
   };
 
+  const handleUnassign = async (reportId) => {
+    if (!currentUser?.id) return;
+
+    try {
+      const formData = new FormData();
+      formData.append("user_id", currentUser.id);
+
+      const response = await fetch(
+        `http://127.0.0.1:8000/reports/${reportId}/signup/remove`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || "Failed to unassign from this report");
+      }
+
+      setRefresh((prev) => prev + 1);
+      setSelectedReport(null);
+    } catch (err) {
+      alert(err.message || "Failed to unassign from this report");
+    }
+  };
+
   const sharedProps = {
     reports,
     currentUser,
@@ -74,6 +101,7 @@ function App() {
     onRefresh: () => setRefresh((prev) => prev + 1),
     onSubmit: handleSubmit,
     onSignup: handleSignup,
+    onUnassign: handleUnassign,
   };
 
   return (
