@@ -1,4 +1,49 @@
+﻿import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+const API_URL = "http://127.0.0.1:8000";
+
 function ListItem({ report, onSelect, onDirections }) {
+  const navigate = useNavigate();
+  const [profilePictureUrl, setProfilePictureUrl] = useState(null);
+
+  const creatorId = report?.created_by ?? report?.created_by_id;
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadProfilePicture() {
+      if (!creatorId) {
+        setProfilePictureUrl(null);
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/users/${creatorId}/profile`);
+
+        if (!response.ok) {
+          throw new Error("Could not load profile");
+        }
+
+        const data = await response.json();
+
+        if (!ignore) {
+          setProfilePictureUrl(data.profile_picture_url || null);
+        }
+      } catch (error) {
+        if (!ignore) {
+          setProfilePictureUrl(null);
+        }
+      }
+    }
+
+    loadProfilePicture();
+
+    return () => {
+      ignore = true;
+    };
+  }, [creatorId]);
+
   if (!report) return null;
 
   const truncateStyle = {
@@ -6,6 +51,14 @@ function ListItem({ report, onSelect, onDirections }) {
     overflow: "hidden",
     textOverflow: "ellipsis",
   };
+
+  function openUserProfile(e) {
+    e.stopPropagation();
+
+    if (creatorId) {
+      navigate(`/users/${creatorId}`);
+    }
+  }
 
   return (
     <div
@@ -51,6 +104,63 @@ function ListItem({ report, onSelect, onDirections }) {
           }}
         >
           {report.message}
+        </span>
+
+        <span
+          style={{
+            width: "150px",
+            fontSize: "0.85rem",
+            flexShrink: 0,
+            textAlign: "center",
+          }}
+        >
+          {report.created_by_username && creatorId ? (
+            <button
+              className="btn btn-link btn-sm p-0"
+              onClick={openUserProfile}
+              style={{
+                textDecoration: "none",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+                color: "inherit",
+              }}
+            >
+              {profilePictureUrl ? (
+                <img
+                  src={profilePictureUrl}
+                  alt={`${report.created_by_username}'s profile`}
+                  style={{
+                    width: "28px",
+                    height: "28px",
+                    borderRadius: "50%",
+                    objectFit: "cover",
+                    border: "1px solid #ccc",
+                  }}
+                />
+              ) : (
+                <span
+                  style={{
+                    width: "28px",
+                    height: "28px",
+                    borderRadius: "50%",
+                    background: "#eee",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    border: "1px solid #ccc",
+                    fontSize: "0.9rem",
+                  }}
+                >
+                  👤
+                </span>
+              )}
+
+              <span>{report.created_by_username}</span>
+            </button>
+          ) : (
+            "Unknown user"
+          )}
         </span>
 
         <span

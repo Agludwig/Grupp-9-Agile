@@ -1,7 +1,9 @@
-﻿import {MapContainer, Marker, Popup, TileLayer, useMap} from "react-leaflet";
-import {useEffect, useState} from "react";
+﻿import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import L from "leaflet";
-import "node_modules/leaflet.heat/dist/leaflet-heat.js";
+import "leaflet.heat";
+import "leaflet/dist/leaflet.css";
 
 function HeatmapLayer({ reports }) {
   const map = useMap();
@@ -9,7 +11,7 @@ function HeatmapLayer({ reports }) {
   useEffect(() => {
     if (!reports.length) return;
 
-    const heatData = reports.map(r => [r.lat, r.lon, 0.5]);
+    const heatData = reports.map((r) => [r.lat, r.lon, 0.5]);
 
     const heat = L.heatLayer(heatData, {
       radius: 25,
@@ -26,6 +28,13 @@ function HeatmapLayer({ reports }) {
 
 export default function MapView({ reports }) {
   const [heatmapOn, setHeatmapOn] = useState(false);
+  const navigate = useNavigate();
+
+  function openUserProfile(userId) {
+    if (userId) {
+      navigate(`/users/${userId}`);
+    }
+  }
 
   return (
     <>
@@ -40,11 +49,29 @@ export default function MapView({ reports }) {
         />
 
         {!heatmapOn &&
-          reports.map(report => (
-            <Marker key={report.id} position={[report.lat, report.lon]}>
-              <Popup>{report.message}</Popup>
-            </Marker>
-          ))}
+          reports.map((report) => {
+            const creatorId = report.created_by ?? report.created_by_id;
+
+            return (
+              <Marker key={report.id} position={[report.lat, report.lon]}>
+                <Popup>
+                  <div>
+                    <strong>{report.title}</strong>
+                    <p>{report.message}</p>
+
+                    {report.created_by_username && creatorId && (
+                      <button
+                        className="btn btn-link btn-sm p-0"
+                        onClick={() => openUserProfile(creatorId)}
+                      >
+                        View {report.created_by_username}'s profile
+                      </button>
+                    )}
+                  </div>
+                </Popup>
+              </Marker>
+            );
+          })}
 
         {heatmapOn && <HeatmapLayer reports={reports} />}
       </MapContainer>
