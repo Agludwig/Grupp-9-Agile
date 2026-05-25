@@ -15,3 +15,6 @@ class LoginRequest(BaseModel):
 
 class User(BaseModel):
     username: str
+class UserProfileUpdate(BaseModel):
+    description: str = Field(default="", max_length=1000)
+    points_visible: bool = True

@@ -4,6 +4,8 @@ from db import get_all_reports, upload_report_image, mark_report_as_handled_with
 from models import ReportCreate
 from submit import submit_report
 from login import router as login_router
+from models import UserProfileUpdate
+from db import ensure_profile_columns, get_user_profile, update_user_profile, upload_user_profile_picture
 
 app = FastAPI()
 
@@ -15,6 +17,10 @@ app.add_middleware(
 )
 
 app.include_router(login_router)
+
+@app.on_event("startup")
+def startup():
+    ensure_profile_columns()
 
 @app.get("/reports")
 def get_reports():
@@ -82,5 +88,54 @@ def remove_signup_report(report_id: int, user_id: int = Form(...)):
     try:
         result = remove_signup_from_handle(report_id, user_id)
         return {"message": "User removed from report signup", **result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/users/{user_id}/profile")
+def read_user_profile(user_id: int, viewer_id: int | None = None):
+    try:
+        profile = get_user_profile(user_id, viewer_id)
+        if not profile:
+            raise HTTPException(status_code=404, detail="User not found")
+        return profile
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.put("/users/{user_id}/profile")
+def edit_user_profile(user_id: int, profile: UserProfileUpdate):
+    try:
+        updated_profile = update_user_profile(
+            user_id=user_id,
+            description=profile.description,
+            points_visible=profile.points_visible,
+        )
+
+        if not updated_profile:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        return updated_profile
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/users/{user_id}/profile-picture")
+async def upload_profile_picture(user_id: int, file: UploadFile = File(...)):
+    try:
+        file_bytes = await file.read()
+        content_type = file.content_type or "image/jpeg"
+
+        profile = upload_user_profile_picture(
+            user_id=user_id,
+            file_bytes=file_bytes,
+            content_type=content_type,
+        )
+
+        return profile
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

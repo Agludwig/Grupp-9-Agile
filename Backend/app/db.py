@@ -191,7 +191,11 @@ def get_all_reports():
                     r.handled_at,
                     r.handled_image_path,
 
+                    r.created_by AS created_by,
+
                     creator.username AS created_by_username,
+
+                    r.handled_by AS handled_by,
 
                     handler.username AS handled_by_username,
 
@@ -241,7 +245,9 @@ def get_all_reports_pandas_df():
                 r.handled_at,
                 r.handled_image_path,
 
-                creator.username AS created_by_username,
+                r.created_by AS created_by,
+
+                    creator.username AS created_by_username,
 
                 handler.username AS handled_by_username
 
@@ -383,3 +389,118 @@ def reset_expired_signup():
             )
 
         conn.commit()
+
+def ensure_profile_columns():
+    with psycopg.connect(database_url, sslmode="require") as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                ALTER TABLE users
+                ADD COLUMN IF NOT EXISTS description TEXT DEFAULT '';
+            """)
+            cur.execute("""
+                ALTER TABLE users
+                ADD COLUMN IF NOT EXISTS profile_picture_path TEXT;
+            """)
+            cur.execute("""
+                ALTER TABLE users
+                ADD COLUMN IF NOT EXISTS points_visible BOOLEAN DEFAULT TRUE;
+            """)
+        conn.commit()
+
+
+def get_profile_picture_url(path: str | None):
+    if not path:
+        return None
+
+    try:
+        return supabase.storage.from_("LitterFreeCitiesImages").get_public_url(path)
+    except Exception:
+        return None
+
+
+def get_user_profile(user_id: int, viewer_id: int | None = None):
+    with psycopg.connect(database_url, sslmode="require") as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT
+                    id,
+                    username,
+                    user_points,
+                    description,
+                    profile_picture_path,
+                    points_visible
+                FROM users
+                WHERE id = %s;
+                """,
+                (user_id,),
+            )
+
+            row = cur.fetchone()
+
+    if not row:
+        return None
+
+    is_owner = viewer_id == row[0]
+    points_visible = row[5]
+
+    return {
+        "id": row[0],
+        "username": row[1],
+        "user_points": row[2] if points_visible or is_owner else None,
+        "description": row[3] or "",
+        "profile_picture_path": row[4],
+        "profile_picture_url": get_profile_picture_url(row[4]),
+        "points_visible": points_visible,
+    }
+
+
+def update_user_profile(user_id: int, description: str, points_visible: bool):
+    with psycopg.connect(database_url, sslmode="require") as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE users
+                SET description = %s,
+                    points_visible = %s
+                WHERE id = %s
+                RETURNING id;
+                """,
+                (description, points_visible, user_id),
+            )
+
+            updated = cur.fetchone()
+            conn.commit()
+
+    if not updated:
+        return None
+
+    return get_user_profile(user_id, viewer_id=user_id)
+
+
+def upload_user_profile_picture(user_id: int, file_bytes: bytes, content_type: str = "image/jpeg"):
+    path = f"profiles/{user_id}.jpg"
+
+    supabase.storage.from_("LitterFreeCitiesImages").upload(
+        path,
+        file_bytes,
+        {
+            "content-type": content_type,
+            "upsert": "true",
+        },
+    )
+
+    with psycopg.connect(database_url, sslmode="require") as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE users
+                SET profile_picture_path = %s
+                WHERE id = %s;
+                """,
+                (path, user_id),
+            )
+        conn.commit()
+
+    return get_user_profile(user_id, viewer_id=user_id)
+
