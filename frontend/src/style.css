@@ -249,3 +249,76 @@ button:hover {
   border-color: #d1d5db;
   font-weight: 600;
 }
+
+.leaderboard-container {
+  margin-bottom: 3rem;
+}
+
+.leaderboard-filters {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid #eee;
+}
+
+.leaderboard-list {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.leaderboard-row {
+  display: flex;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid #eee;
+  background: #fff;
+  transition: background 0.15s;
+}
+
+.leaderboard-row.gold {
+  background: #ffe8b3;
+  border-left: 4px solid #ffd700;
+}
+
+.leaderboard-row.silver {
+  background: #e3e3e3;
+  border-left: 4px solid #c0c0c0;
+}
+
+.leaderboard-row.bronze {
+  background: #e3d2c5;
+  border-left: 4px solid #cd7f32;
+}
+
+.leaderboard-row {
+  background: #ffffff;
+}
+
+.leaderboard-row:last-child {
+  border-bottom: none;
+}
+
+.leaderboard-row:hover {
+  filter: brightness(0.97);
+}
+
+.leaderboard-rank {
+  width: 50px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #555;
+}
+
+.leaderboard-username {
+  flex: 1;
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+
+.leaderboard-count {
+  font-size: 1rem;
+  color: #242424;
+}
