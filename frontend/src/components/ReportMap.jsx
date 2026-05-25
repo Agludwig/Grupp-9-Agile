@@ -9,13 +9,16 @@ function HeatmapLayer({ reports }) {
   const map = useMap();
 
   useEffect(() => {
-    if (!reports.length) return;
+    if (!reports.length || !L.heatLayer) return;
 
-    const heatData = reports.map((r) => [r.lat, r.lon, 0.5]);
-
+    const heatData = reports
+      .filter((r) => r.lat && r.lon)
+      .map((r) => [r.lat, r.lon, 1]);
     const heat = L.heatLayer(heatData, {
       radius: 25,
-      blur: 15,
+      maxZoom: 8,
+      max: 0.2,
+      blur: 45,
     }).addTo(map);
 
     return () => {
@@ -38,11 +41,13 @@ export default function MapView({ reports }) {
 
   return (
     <>
-      <button onClick={() => setHeatmapOn(!heatmapOn)}>
-        Toggle Heatmap
-      </button>
+      <button onClick={() => setHeatmapOn(!heatmapOn)}>Toggle Heatmap</button>
 
-      <MapContainer center={[57.70, 12]} zoom={13} style={{ height: "500px", width: "100%" }}>
+      <MapContainer
+        center={[57.7, 12]}
+        zoom={13}
+        style={{ height: "500px", width: "100%" }}
+      >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution="&copy; OpenStreetMap contributors"
